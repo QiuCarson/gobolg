@@ -9,7 +9,7 @@
 {{ range . }}
 	<article>
 	<h1><a href="/note/{{ .ID }}">{{ .Post_title }}</a></h1>
-	<section>{{ .Post_content }}</section>
+	<section>{{.Post_content }}</section>
 	<mark>{{ .Post_date }}</mark>
 	</article>
 {{ end }}
