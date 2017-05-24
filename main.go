@@ -27,7 +27,8 @@ type post struct {
 }
 
 func init() {
-	db, _ = sql.Open("mysql", "root:root@/wordpres1?charset=utf8")
+	//db, _ = sql.Open("mysql", "root:root@/wordpres1?charset=utf8")
+	db, _ = sql.Open("mysql", "test:123456@/bolgsong?charset=utf8")
 }
 
 func main() {
@@ -56,11 +57,12 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	posts := []post{}
 	for rows.Next() {
 		p := post{}
-		rows.Scan(&p.ID, &p.Post_title, &p.Post_content, &p.Post_date)
+		var Post_content string
+		rows.Scan(&p.ID, &p.Post_title, &Post_content, &p.Post_date)
 		p.ID = p.ID
 		p.Post_title = p.Post_title
-		fmt.Println(p.Post_content)
-		p.Post_content = template.HTML(p.Post_content)
+		//gifmt.Println(p.Post_content)
+		p.Post_content = template.HTML(Post_content)
 		p.Post_date = p.Post_date
 
 		posts = append(posts, p)
@@ -68,7 +70,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	//data := map[string][]string{}ced
 
 	//data["list"] = posts
-	//fmt.Println(posts)
+	fmt.Println(posts)
 
 	renderTemplate(w, "index.html", posts)
 	//t.ExecuteTemplate(w, "index.html", posts)
