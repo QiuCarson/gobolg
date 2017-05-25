@@ -1,0 +1,6 @@
+{
+    "Username":"root",
+    "Password":"root",
+    "Mysql":"root:root@/wordpres1?charset=utf8",
+    "Prefix":"so_"
+}

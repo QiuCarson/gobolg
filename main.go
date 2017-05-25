@@ -2,21 +2,29 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"regexp"
+	"strconv"
+
+	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
+	"github.com/qiucarson/blog/config"
 )
 
 var (
 	db        *sql.DB
-	db_prefix = "so_"
+	db_prefix string
 	//config config.Config
 	//v      config.Vars
-	t = template.Must(template.ParseGlob("views/*"))
+	t = template.Must(template.ParseGlob("views/*.html"))
+)
+
+const (
+	PAGE_MAX = 1
 )
 
 type post struct {
@@ -27,8 +35,10 @@ type post struct {
 }
 
 func init() {
-	//db, _ = sql.Open("mysql", "root:root@/wordpres1?charset=utf8")
-	db, _ = sql.Open("mysql", "test:123456@/bolgsong?charset=utf8")
+	c := config.MysqlConfig()
+	db, _ = sql.Open("mysql", c.Mysql)
+	db_prefix = c.Prefix
+	//db, _ = sql.Open("mysql", "test:123456@/bolgsong?charset=utf8")
 }
 
 func main() {
@@ -44,11 +54,15 @@ func main() {
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 	page := mux.Vars(r)["page"]
-	if page != "" {
+	if page == "" {
 		page = "1"
 	}
+	pages, err := strconv.Atoi(page)
+	pages = (pages - 1) * PAGE_MAX
+	page_max := strconv.Itoa(PAGE_MAX)
 
-	rows, err := db.Query("SELECT ID,post_title,post_content,post_date FROM " + db_prefix + "posts ORDER BY ID DESC LIMIT 1,10")
+	stmt, _ := db.Prepare("SELECT ID,post_title,post_content,post_date FROM " + db_prefix + "posts 	WHERE post_type='post' AND post_status = 'publish' ORDER BY ID DESC LIMIT ?,?")
+	rows, err := stmt.Query(pages, page_max)
 
 	defer rows.Close()
 	if err != nil {
@@ -63,14 +77,11 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		p.Post_title = p.Post_title
 		//gifmt.Println(p.Post_content)
 		p.Post_content = template.HTML(Post_content)
+		fmt.Println(Tagtotext(Post_content))
 		p.Post_date = p.Post_date
 
 		posts = append(posts, p)
 	}
-	//data := map[string][]string{}ced
-
-	//data["list"] = posts
-	fmt.Println(posts)
 
 	renderTemplate(w, "index.html", posts)
 	//t.ExecuteTemplate(w, "index.html", posts)
@@ -79,7 +90,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 /*模板解析*/
 //func renderTemplate(w http.ResponseWriter, tmpl string, data map[string]interface{}) {
 func renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
-	//t = t.Funcs(template.FuncMap{"unescaped": unescaped})
+
 	err := t.ExecuteTemplate(w, tmpl, data)
 
 	// Things will be more elegant than this: just a placeholder for now!
@@ -88,11 +99,8 @@ func renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
 	}
 }
 
-func noescape(str string) template.HTML {
-	return template.HTML(str)
-}
-
-//http://studygolang.com/articles/1741
-func unescaped(x string) interface{} {
-	return template.HTML(x)
+func Tagtotext(content string) string {
+	re, _ := regexp.Compile("\\<[\\S\\s]+?\\>")
+	content = re.ReplaceAllString(content, "\n")
+	return content
 }
