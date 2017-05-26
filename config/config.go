@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+
+	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
@@ -29,6 +31,22 @@ func Conf() Config {
 	return c
 }
 
+/**
+
+ */
+func GetYamlConfig(path string) map[interface{}]interface{} {
+	data, err := ioutil.ReadFile(path)
+	m := make(map[interface{}]interface{})
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	err = yaml.Unmarshal([]byte(data), &m)
+	return m
+}
+
+/**
+json 配置文件解析
+*/
 func MysqlConfig() Mysqlstruct {
 	var m Mysqlstruct
 
